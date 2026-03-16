@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>羊了个羊 - 网页版</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+        <style>
+            :root {
+                --primary: #5D4E37;
+                --accent: #F5A623;
+                --accent-light: #FFD166;
+                --grass-light: #A8D5BA;
+                --grass-dark: #7CB889;
+                --wood-light: #D4A574;
+                --wood-dark: #8B5A2B;
+                --card-bg: #FFFEF5;
+                --shadow: rgba(93, 78, 55, 0.3);
+                --glow: rgba(245, 166, 35, 0.4);
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                font-family: 'Noto Sans SC', sans-serif;
+                user-select: none;
+                overflow-x: hidden;
+                background: 
+                    radial-gradient(ellipse at 50% 0%, rgba(168, 213, 186, 0.4) 0%, transparent 60%),
+                    linear-gradient(180deg, #87CEEB 0%, #A8D5BA 40%, #7CB889 100%);
+            }
+
+            body::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0 L60 35 L95 35 L65 55 L75 90 L50 70 L25 90 L35 55 L5 35 L40 35 Z' fill='%23ffffff' fill-opacity='0.08'/%3E%3C/svg%3E");
+                background-size: 60px 60px;
+                pointer-events: none;
+                z-index: 0;
+            }
+
+            .game-container {
+                position: relative;
+                z-index: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 20px;
+                max-width: 600px;
+                width: 100%;
+            }
+
+            h1 {
+                font-family: 'ZCOOL KuaiLe', cursive;
+                font-size: 2.5rem;
+                color: var(--primary);
+                text-shadow: 
+                    3px 3px 0 var(--wood-light),
+                    -1px -1px 0 #fff,
+                    1px -1px 0 #fff,
+                    -1px 1px 0 #fff;
+                margin: 15px 0;
+                animation: titleBounce 2s ease-in-out infinite;
+                letter-spacing: 4px;
+            }
+
+            @keyframes titleBounce {
+                0%, 100% { transform: translateY(0) scale(1); }
+                50% { transform: translateY(-5px) scale(1.02); }
+            }
+
+            .level-select {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+                margin-bottom: 20px;
+                max-width: 400px;
+            }
+
+            .level-btn {
+                width: 45px;
+                height: 45px;
+                border: none;
+                border-radius: 12px;
+                font-family: 'ZCOOL KuaiLe', cursive;
+                font-size: 1.1rem;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            }
+
+            .level-btn:hover {
+                transform: translateY(-3px);
+            }
+
+            .level-btn:active {
+                transform: translateY(2px);
+                box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+            }
+
+            .level-btn.active {
+                box-shadow: 0 0 15px var(--glow), 0 4px 0 rgba(0,0,0,0.2);
+            }
+
+            .level-btn.easy { background: linear-gradient(180deg, #90EE90, #3CB371); color: #006400; }
+            .level-btn.medium { background: linear-gradient(180deg, #FFD700, #FFA500); color: #8B4500; }
+            .level-btn.hard { background: linear-gradient(180deg, #FF6B6B, #DC143C); color: #fff; }
+            .level-btn.expert { background: linear-gradient(180deg, #9400D3, #4B0082); color: #fff; }
+            .level-btn.hell { background: linear-gradient(180deg, #FF0000, #8B0000); color: #fff; }
+
+            .score-display {
+                display: flex;
+                gap: 15px;
+                margin-bottom: 15px;
+            }
+
+            .score-item {
+                font-family: 'ZCOOL KuaiLe', cursive;
+                font-size: 1rem;
+                color: var(--primary);
+                background: linear-gradient(180deg, #fff 0%, #f5e6c8 100%);
+                padding: 6px 16px;
+                border-radius: 12px;
+                box-shadow: 
+                    0 3px 0 var(--wood-light),
+                    0 5px 12px rgba(0, 0, 0, 0.15);
+                border: 2px solid var(--wood-dark);
+            }
+
+            .level-info {
+                font-family: 'ZCOOL KuaiLe', cursive;
+                font-size: 0.9rem;
+                color: var(--primary);
+                background: linear-gradient(180deg, #fff 0%, #f5e6c8 100%);
+                padding: 5px 14px;
+                border-radius: 10px;
+                margin-bottom: 10px;
+                box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+                border: 2px solid var(--wood-dark);
+            }
+
+            .game-board-wrapper {
+                position: relative;
+                padding: 25px;
+                background: 
+                    linear-gradient(135deg, var(--grass-light) 0%, var(--grass-dark) 100%);
+                border-radius: 24px;
+                box-shadow: 
+                    0 20px 60px rgba(0, 0, 0, 0.2),
+                    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                    inset 0 -5px 20px rgba(0, 0, 0, 0.1);
+                border: 4px solid var(--wood-dark);
+            }
+
+            .game-board-wrapper::before {
+                content: '';
+                position: absolute;
+                top: -10px;
+                left: -10px;
+                right: -10px;
+                bottom: -10px;
+                border: 3px dashed var(--wood-light);
+                border-radius: 30px;
+                opacity: 0.5;
+                animation: borderRotate 20s linear infinite;
+            }
+
+            @keyframes borderRotate {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+
+            #game-board {
+                position: relative;
+                background: 
+                    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 50%),
+                    linear-gradient(135deg, #90B080 0%, #6B9A5F 100%);
+                border-radius: 16px;
+                box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.2);
+            }
+
+            .card {
+                position: absolute;
+                width: 44px;
+                height: 44px;
+                background: linear-gradient(145deg, #ffffff 0%, var(--card-bg) 50%, #f0f0e8 100%);
+                border-radius: 8px;
+                box-shadow: 
+                    0 3px 0 var(--wood-dark),
+                    0 5px 8px rgba(0, 0, 0, 0.2),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 24px;
+                cursor: pointer;
+                transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+                box-sizing: border-box;
+                border: 2px solid #e8e4d8;
+            }
+
+            .card::before {
+                content: '';
+                position: absolute;
+                top: 2px;
+                left: 2px;
+                right: 2px;
+                height: 40%;
+                background: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, transparent 100%);
+                border-radius: 6px 6px 50% 50%;
+                pointer-events: none;
+            }
+
+            .card:hover:not(.disabled) {
+                transform: translateY(-5px) scale(1.1);
+                box-shadow: 
+                    0 8px 0 var(--wood-dark),
+                    0 15px 25px rgba(0, 0, 0, 0.25),
+                    0 0 20px var(--glow);
+                z-index: 100 !important;
+            }
+
+            .card:active:not(.disabled) {
+                transform: translateY(2px) scale(1.05);
+                box-shadow: 
+                    0 2px 0 var(--wood-dark),
+                    0 4px 8px rgba(0, 0, 0, 0.2);
+            }
+
+            .card.disabled {
+                filter: brightness(0.45) saturate(0.7);
+                pointer-events: none;
+                transform: scale(0.95);
+            }
+
+            .card.matched {
+                animation: matchPop 0.4s ease-out forwards;
+            }
+
+            @keyframes matchPop {
+                0% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.3); }
+                100% { transform: scale(0); opacity: 0; }
+            }
+
+            .card.new {
+                animation: cardAppear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+
+            @keyframes cardAppear {
+                0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+                100% { transform: scale(1) rotate(0deg); opacity: 1; }
+            }
+
+            #tray {
+                width: 380px;
+                height: 65px;
+                background: 
+                    linear-gradient(180deg, var(--wood-light) 0%, var(--wood-dark) 100%);
+                border-radius: 14px;
+                margin-top: 25px;
+                display: flex;
+                padding: 7px;
+                box-sizing: border-box;
+                gap: 5px;
+                box-shadow: 
+                    0 6px 0 #5D3A1A,
+                    0 10px 20px rgba(0, 0, 0, 0.3),
+                    inset 0 2px 0 rgba(255, 255, 255, 0.2),
+                    inset 0 -3px 10px rgba(0, 0, 0, 0.2);
+                border: 3px solid #5D3A1A;
+                position: relative;
+            }
+
+            #tray::before {
+                content: '收集槽';
+                position: absolute;
+                top: -25px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-family: 'ZCOOL KuaiLe', cursive;
+                font-size: 0.9rem;
+                color: var(--primary);
+                background: linear-gradient(180deg, #fff 0%, #f5e6c8 100%);
+                padding: 4px 14px;
+                border-radius: 10px;
+                box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+                border: 2px solid var(--wood-dark);
+            }
+
+            #tray::after {
+                content: '';
+                position: absolute;
+                top: 7px;
+                left: 7px;
+                right: 7px;
+                bottom: 7px;
+                background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.2) 100%);
+                border-radius: 8px;
+                pointer-events: none;
+            }
+
+            #tray .card {
+                position: relative;
+                width: 44px;
+                height: 44px;
+                box-shadow: 
+                    0 3px 0 #5D3A1A,
+                    0 4px 6px rgba(0, 0, 0, 0.3);
+                flex-shrink: 0;
+            }
+
+            .btn-row {
+                display: flex;
+                gap: 15px;
+                margin-top: 25px;
+            }
+
+            .btn {
+                padding: 12px 25px;
+                font-size: 1rem;
+                font-family: 'ZCOOL KuaiLe', cursive;
+                color: #fff;
+                background: linear-gradient(180deg, var(--accent) 0%, #E08E0B 100%);
+                border: none;
+                border-radius: 20px;
+                cursor: pointer;
+                box-shadow: 
+                    0 4px 0 #B8730A,
+                    0 6px 15px rgba(0, 0, 0, 0.25),
+                    inset 0 2px 0 rgba(255, 255, 255, 0.3);
+                transition: all 0.15s ease;
+                letter-spacing: 1px;
+            }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 
+                    0 6px 0 #B8730A,
+                    0 12px 20px rgba(0, 0, 0, 0.3),
+                    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                    0 0 20px var(--glow);
+            }
+
+            .btn:active {
+                transform: translateY(2px);
+                box-shadow: 
+                    0 2px 0 #B8730A,
+                    0 4px 8px rgba(0, 0, 0, 0.2);
+            }
+
+            .btn.shuffle {
+                background: linear-gradient(180deg, #9B59B6, #8E44AD);
+                box-shadow: 
+                    0 4px 0 #6C3483,
+                    0 6px 15px rgba(0, 0, 0, 0.25),
+                    inset 0 2px 0 rgba(255, 255, 255, 0.3);
+            }
+            
+            .btn.shuffle:hover {
+                box-shadow: 
+                    0 6px 0 #6C3483,
+                    0 12px 20px rgba(0, 0, 0, 0.3),
+                    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                    0 0 20px rgba(155, 89, 182, 0.4);
+            }
+
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.6);
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                backdrop-filter: blur(5px);
+            }
+
+            .modal.show {
+                display: flex;
+                animation: fadeIn 0.3s ease;
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+
+            .modal-content {
+                background: linear-gradient(180deg, #fff 0%, #f5e6c8 100%);
+                padding: 35px 45px;
+                border-radius: 24px;
+                text-align: center;
+                box-shadow: 
+                    0 20px 60px rgba(0, 0, 0, 0.4),
+                    inset 0 2px 0 rgba(255, 255, 255, 0.8);
+                border: 4px solid var(--wood-dark);
+                animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+
+            @keyframes modalPop {
+                from { transform: scale(0.5); opacity: 0; }
+                to { transform: scale(1); opacity: 1; }
+            }
+
+            .modal h2 {
+                font-family: 'ZCOOL KuaiLe', cursive;
+                font-size: 2rem;
+                color: var(--primary);
+                margin-bottom: 12px;
+            }
+
+            .modal p {
+                font-size: 1.1rem;
+                color: #666;
+                margin-bottom: 20px;
+            }
+
+            .sheep-decoration {
+                position: fixed;
+                font-size: 3rem;
+                opacity: 0.15;
+                pointer-events: none;
+                z-index: 0;
+            }
+
+            .sheep-1 { top: 10%; left: 5%; animation: float 6s ease-in-out infinite; }
+            .sheep-2 { top: 20%; right: 8%; animation: float 8s ease-in-out infinite reverse; }
+            .sheep-3 { bottom: 15%; left: 10%; animation: float 7s ease-in-out infinite; }
+            .sheep-4 { bottom: 25%; right: 5%; animation: float 9s ease-in-out infinite reverse; }
+
+            @keyframes float {
+                0%, 100% { transform: translateY(0) rotate(0deg); }
+                50% { transform: translateY(-20px) rotate(5deg); }
+            }
+
+            @media (max-width: 480px) {
+                h1 { font-size: 1.8rem; }
+                .level-btn { width: 38px; height: 38px; font-size: 0.9rem; }
+                #tray { width: 320px; }
+                #tray .card { width: 38px; height: 38px; font-size: 20px; }
+                .card { width: 38px; height: 38px; font-size: 20px; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="sheep-decoration sheep-1">🐑</div>
+        <div class="sheep-decoration sheep-2">🐏</div>
+        <div class="sheep-decoration sheep-3">🐑</div>
+        <div class="sheep-decoration sheep-4">🐏</div>
+
+        <div class="game-container">
+            <h1>🐏 羊了个羊 🐏</h1>
+            
+            <div class="level-select" id="levelSelect"></div>
+
+            <div class="level-info" id="levelInfo">第 1 关 - 入门模式</div>
+
+            <div class="score-display">
+                <div class="score-item">剩余: <span id="remaining">0</span></div>
+                <div class="score-item">槽位: <span id="tray-count">0</span>/7</div>
+            </div>
+
+            <div class="game-board-wrapper">
+                <div id="game-board"></div>
+            </div>
+
+            <div id="tray"></div>
+
+            <div class="btn-row">
+                <button class="btn shuffle" id="shuffleBtn" onclick="shuffleBoard()" style="display:none;">🔀 洗牌</button>
+                <button class="btn" onclick="initGame()">🔄 重新开始</button>
+            </div>
+        </div>
+
+        <div class="modal" id="winModal">
+            <div class="modal-content">
+                <h2>🎉 恭喜通关!</h2>
+                <p id="winMsg">第 1 关通过！</p>
+                <button class="btn" id="nextLevelBtn" onclick="nextLevel()">下一关</button>
+                <button class="btn" onclick="closeModal('winModal'); initGame()" style="margin-left:10px;">重玩</button>
+            </div>
+        </div>
+
+        <div class="modal" id="loseModal">
+            <div class="modal-content">
+                <h2>😢 槽位已满</h2>
+                <p>再接再厉，下次好运!</p>
+                <button class="btn" onclick="closeModal('loseModal'); initGame()">重新挑战</button>
+            </div>
+        </div>
+
+        <script>
+            // 扩展 emoji 列表支持最多8种类型
+            const allEmojis = ["🍎", "🍌", "🍇", "🍉", "🥕", "🌽", "🍓", "🍒"];
+            
+            // 基于关卡设计原则的难度递增配置
+            // 难度因素: 卡片类型数、图层数、遮挡复杂度、是否有洗牌
+            const LEVELS = [
+                // 入门阶段 (1-2关): 教学关卡，让玩家熟悉机制
+                { name: "入门", types: 3, layers: 2, shuffle: false, difficulty: "easy" },
+                { name: "熟悉", types: 3, layers: 2, shuffle: false, difficulty: "easy" },
+                // 进阶阶段 (3-4关): 增加卡片类型，轻微增加复杂度
+                { name: "进阶", types: 4, layers: 3, shuffle: false, difficulty: "medium" },
+                { name: "挑战", types: 4, layers: 3, shuffle: false, difficulty: "medium" },
+                // 困难阶段 (5-6关): 更多类型和图层
+                { name: "困难", types: 5, layers: 4, shuffle: false, difficulty: "hard" },
+                { name: "高难", types: 5, layers: 4, shuffle: true, difficulty: "hard" },
+                // 专家阶段 (7-8关): 高复杂度
+                { name: "专家", types: 6, layers: 5, shuffle: true, difficulty: "expert" },
+                { name: "大师", types: 6, layers: 5, shuffle: true, difficulty: "expert" },
+                // 极限阶段 (9-10关): 最高难度
+                { name: "王者", types: 7, layers: 6, shuffle: true, difficulty: "expert" },
+                { name: "地狱", types: 8, layers: 7, shuffle: true, difficulty: "hell" }
+            ];
+
+            const CARD_SIZE = 44;
+            const TRAY_LIMIT = 7;
+            const CARDS_PER_TYPE = 6;
+
+            let currentLevel = 0;
+            let allCards = [];
+            let trayCards = [];
+            let isAnimating = false;
+            let shuffleUsed = false;
+
+            function initLevelButtons() {
+                const container = document.getElementById('levelSelect');
+                container.innerHTML = '';
+                
+                LEVELS.forEach((level, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = `level-btn ${level.difficulty} ${index === currentLevel ? 'active' : ''}`;
+                    btn.textContent = index + 1;
+                    btn.onclick = () => selectLevel(index);
+                    container.appendChild(btn);
+                });
+            }
+
+            function selectLevel(index) {
+                currentLevel = index;
+                document.querySelectorAll('.level-btn').forEach((btn, i) => {
+                    btn.classList.toggle('active', i === index);
+                });
+                document.getElementById('shuffleBtn').style.display = LEVELS[index].shuffle ? 'inline-block' : 'none';
+                initGame();
+            }
+
+            function initGame() {
+                allCards = [];
+                trayCards = [];
+                isAnimating = false;
+                shuffleUsed = false;
+                document.getElementById("game-board").innerHTML = "";
+                document.getElementById("tray").innerHTML = "";
+                document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
+                
+                const level = LEVELS[currentLevel];
+                document.getElementById('levelInfo').textContent = `第 ${currentLevel + 1} 关 - ${level.name}`;
+                
+                generateLevel(level);
+                renderBoard();
+                checkOverlap();
+                updateScore();
+            }
+
+            function generateLevel(level) {
+                const emojis = allEmojis.slice(0, level.types);
+                const totalCards = level.types * CARDS_PER_TYPE;
+                
+                // 生成确保每种类型恰好有 CARDS_PER_TYPE 张的图案列表
+                let patternList = [];
+                for (let i = 0; i < level.types; i++) {
+                    for (let j = 0; j < CARDS_PER_TYPE; j++) {
+                        patternList.push(emojis[i]);
+                    }
+                }
+                patternList.sort(() => Math.random() - 0.5);
+
+                // 获取每层的卡片配置，确保总数等于 totalCards
+                const layerConfigs = getLayerConfigs(level.layers, totalCards);
+                
+                // 验证总卡片数匹配
+                const configuredTotal = layerConfigs.reduce((sum, cfg) => sum + cfg.cardCount, 0);
+                if (configuredTotal !== totalCards) {
+                    console.warn(`卡片数量不匹配: 配置了 ${configuredTotal} 张, 需要 ${totalCards} 张`);
+                }
+
+                let idCounter = 0;
+                
+                layerConfigs.forEach((config, layerIndex) => {
+                    const offsetX = layerIndex * (CARD_SIZE * 0.45);
+                    const offsetY = layerIndex * (CARD_SIZE * 0.45);
+                    
+                    // 根据图层配置计算起始位置，使卡片居中
+                    const boardWidth = config.cols * CARD_SIZE;
+                    const boardHeight = config.rows * CARD_SIZE;
+                    const startX = 30 + offsetX;
+                    const startY = 50 + offsetY;
+                    
+                    let cardsPlaced = 0;
+                    for (let row = 0; row < config.rows && cardsPlaced < config.cardCount; row++) {
+                        for (let col = 0; col < config.cols && cardsPlaced < config.cardCount; col++) {
+                            const cardType = patternList.pop();
+                            if (cardType === undefined) {
+                                console.warn('图案列表已空，但仍需放置卡片');
+                                continue;
+                            }
+                            allCards.push({
+                                id: idCounter++,
+                                type: cardType,
+                                x: col * CARD_SIZE + startX,
+                                y: row * CARD_SIZE + startY,
+                                layer: layerIndex,
+                                removed: false,
+                            });
+                            cardsPlaced++;
+                        }
+                    }
+                });
+                
+                const board = document.getElementById('game-board');
+                const maxX = Math.max(...allCards.map(c => c.x)) + CARD_SIZE + 20;
+                const maxY = Math.max(...allCards.map(c => c.y)) + CARD_SIZE + 20;
+                board.style.width = maxX + 'px';
+                board.style.height = maxY + 'px';
+            }
+
+            // 根据图层数和总卡片数生成每层配置
+            // 确保: 1) 底层卡片多，上层卡片少（金字塔结构）
+            //       2) 总卡片数精确匹配
+            //       3) 上层卡片能有效遮挡下层
+            function getLayerConfigs(layers, totalCards) {
+                const configs = [];
+                
+                // 使用金字塔分配: 底层最多，越往上越少
+                // 计算权重总和: layers + (layers-1) + ... + 1 = layers*(layers+1)/2
+                const weightSum = (layers * (layers + 1)) / 2;
+                
+                let remaining = totalCards;
+                
+                for (let i = 0; i < layers; i++) {
+                    const layerWeight = layers - i; // 底层权重最高
+                    const isLastLayer = i === layers - 1;
+                    
+                    let layerCards;
+                    if (isLastLayer) {
+                        // 最后一层分配剩余所有卡片
+                        layerCards = remaining;
+                    } else {
+                        // 按权重分配，确保至少3张（一组可消除）
+                        layerCards = Math.max(3, Math.round((layerWeight / weightSum) * totalCards));
+                        // 确保剩余足够分给后面的层
+                        const minForRemainingLayers = (layers - i - 1) * 3;
+                        if (remaining - layerCards < minForRemainingLayers) {
+                            layerCards = remaining - minForRemainingLayers;
+                        }
+                    }
+                    
+                    layerCards = Math.max(0, Math.min(layerCards, remaining));
+                    
+                    // 计算合适的行列数
+                    const cols = Math.max(2, Math.ceil(Math.sqrt(layerCards * 1.3)));
+                    const rows = Math.max(2, Math.ceil(layerCards / cols));
+                    
+                    configs.push({
+                        rows: rows,
+                        cols: cols,
+                        cardCount: layerCards
+                    });
+                    
+                    remaining -= layerCards;
+                }
+                
+                return configs;
+            }
+
+            function renderBoard() {
+                const board = document.getElementById("game-board");
+                allCards.forEach((cardData, index) => {
+                    const cardEl = document.createElement("div");
+                    cardEl.className = "card new";
+                    cardEl.innerText = cardData.type;
+                    cardEl.style.left = cardData.x + "px";
+                    cardEl.style.top = cardData.y + "px";
+                    cardEl.style.zIndex = cardData.layer;
+                    cardEl.style.animationDelay = (index * 0.015) + 's';
+                    cardEl.id = "card-" + cardData.id;
+
+                    cardEl.onclick = () => handleCardClick(cardData);
+                    board.appendChild(cardEl);
+                    cardData.element = cardEl;
+                });
+            }
+
+            function checkOverlap() {
+                allCards.forEach((card) => {
+                    if (card.removed) return;
+
+                    let isCovered = false;
+                    for (let other of allCards) {
+                        if (!other.removed && other.layer > card.layer) {
+                            let dx = Math.abs(card.x - other.x);
+                            let dy = Math.abs(card.y - other.y);
+                            if (dx < CARD_SIZE * 0.9 && dy < CARD_SIZE * 0.9) {
+                                isCovered = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (isCovered) {
+                        card.element.classList.add("disabled");
+                    } else {
+                        card.element.classList.remove("disabled");
+                    }
+                });
+            }
+
+            function handleCardClick(card) {
+                if (isAnimating || card.removed || card.element.classList.contains("disabled")) return;
+
+                isAnimating = true;
+
+                card.removed = true;
+                card.element.style.display = "none";
+
+                trayCards.push(card);
+                trayCards.sort((a, b) => a.type.localeCompare(b.type));
+
+                const removed = checkMatch();
+                
+                renderTray();
+                checkOverlap();
+                updateScore();
+
+                if (removed) {
+                    setTimeout(() => {
+                        isAnimating = false;
+                        checkWinLose();
+                    }, 400);
+                } else {
+                    setTimeout(() => {
+                        isAnimating = false;
+                        checkWinLose();
+                    }, 100);
+                }
+            }
+
+            function checkMatch() {
+                let counts = {};
+                trayCards.forEach((c) => (counts[c.type] = (counts[c.type] || 0) + 1));
+
+                let removed = false;
+                for (let type in counts) {
+                    if (counts[type] >= 3) {
+                        removed = true;
+                        // 找出要移除的卡片索引
+                        const toRemoveIndices = [];
+                        for (let i = 0; i < trayCards.length && toRemoveIndices.length < 3; i++) {
+                            if (trayCards[i].type === type) {
+                                toRemoveIndices.push(i);
+                            }
+                        }
+                        
+                        // 给对应的DOM元素添加动画
+                        const trayEl = document.getElementById("tray");
+                        const trayCardsEls = trayEl.querySelectorAll('.card');
+                        toRemoveIndices.forEach(idx => {
+                            if (trayCardsEls[idx]) {
+                                trayCardsEls[idx].classList.add('matched');
+                            }
+                        });
+                        
+                        // 从后往前移除，避免索引偏移问题
+                        for (let i = toRemoveIndices.length - 1; i >= 0; i--) {
+                            trayCards.splice(toRemoveIndices[i], 1);
+                        }
+                    }
+                }
+                return removed;
+            }
+
+            function renderTray() {
+                const tray = document.getElementById("tray");
+                tray.innerHTML = "";
+                trayCards.forEach((card) => {
+                    const cardEl = document.createElement("div");
+                    cardEl.className = "card";
+                    cardEl.innerText = card.type;
+                    tray.appendChild(cardEl);
+                });
+            }
+
+            function updateScore() {
+                const remaining = allCards.filter(c => !c.removed).length;
+                document.getElementById("remaining").textContent = remaining;
+                document.getElementById("tray-count").textContent = trayCards.length;
+            }
+
+            function shuffleBoard() {
+                if (shuffleUsed || isAnimating) return;
+                
+                shuffleUsed = true;
+                document.getElementById('shuffleBtn').style.display = 'none';
+                
+                const availableCards = allCards.filter(c => !c.removed);
+                const types = availableCards.map(c => c.type);
+                types.sort(() => Math.random() - 0.5);
+                
+                availableCards.forEach((card, i) => {
+                    card.type = types[i];
+                    card.element.innerText = types[i];
+                    card.element.style.animation = 'none';
+                    setTimeout(() => {
+                        card.element.style.animation = 'cardAppear 0.3s ease';
+                    }, 50);
+                });
+                
+                setTimeout(() => {
+                    checkOverlap();
+                }, 350);
+            }
+
+            function checkWinLose() {
+                const maxLevel = LEVELS.length - 1;
+                let leftCards = allCards.filter((c) => !c.removed).length;
+                if (leftCards === 0 && trayCards.length === 0) {
+                    document.getElementById("winMsg").textContent = `第 ${currentLevel + 1} 关通过！${currentLevel < maxLevel ? '继续挑战下一关！' : '你已通关全部关卡！'}`;
+                    document.getElementById("nextLevelBtn").style.display = currentLevel < maxLevel ? 'inline-block' : 'none';
+                    document.getElementById("winModal").classList.add("show");
+                    return;
+                }
+
+                if (trayCards.length >= TRAY_LIMIT) {
+                    document.getElementById("loseModal").classList.add("show");
+                }
+            }
+
+            function nextLevel() {
+                closeModal('winModal');
+                if (currentLevel < LEVELS.length - 1) {
+                    selectLevel(currentLevel + 1);
+                }
+            }
+
+            function closeModal(id) {
+                document.getElementById(id).classList.remove("show");
+            }
+
+            initLevelButtons();
+            initGame();
+        </script>
+    </body>
+</html>
