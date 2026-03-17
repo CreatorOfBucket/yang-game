@@ -83,45 +83,6 @@
                 50% { transform: translateY(-5px) scale(1.02); }
             }
 
-            .level-select {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 8px;
-                margin-bottom: 20px;
-                max-width: 400px;
-            }
-
-            .level-btn {
-                width: 45px;
-                height: 45px;
-                border: none;
-                border-radius: 12px;
-                font-family: 'ZCOOL KuaiLe', cursive;
-                font-size: 1.1rem;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                box-shadow: 0 4px 0 rgba(0,0,0,0.2);
-            }
-
-            .level-btn:hover {
-                transform: translateY(-3px);
-            }
-
-            .level-btn:active {
-                transform: translateY(2px);
-                box-shadow: 0 2px 0 rgba(0,0,0,0.2);
-            }
-
-            .level-btn.active {
-                box-shadow: 0 0 15px var(--glow), 0 4px 0 rgba(0,0,0,0.2);
-            }
-
-            .level-btn.easy { background: linear-gradient(180deg, #90EE90, #3CB371); color: #006400; }
-            .level-btn.medium { background: linear-gradient(180deg, #FFD700, #FFA500); color: #8B4500; }
-            .level-btn.hard { background: linear-gradient(180deg, #FF6B6B, #DC143C); color: #fff; }
-            .level-btn.expert { background: linear-gradient(180deg, #9400D3, #4B0082); color: #fff; }
-            .level-btn.hell { background: linear-gradient(180deg, #FF0000, #8B0000); color: #fff; }
 
             .score-display {
                 display: flex;
@@ -209,7 +170,7 @@
                 align-items: center;
                 font-size: 24px;
                 cursor: pointer;
-                transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+                transition: box-shadow 0.15s ease, border-color 0.15s ease;
                 box-sizing: border-box;
                 border: 2px solid #e8e4d8;
             }
@@ -227,19 +188,20 @@
             }
 
             .card:hover:not(.disabled) {
-                transform: translateY(-5px) scale(1.1);
-                box-shadow: 
-                    0 8px 0 var(--wood-dark),
-                    0 15px 25px rgba(0, 0, 0, 0.25),
-                    0 0 20px var(--glow);
+                box-shadow:
+                    0 3px 0 var(--wood-dark),
+                    0 5px 8px rgba(0, 0, 0, 0.2),
+                    0 0 16px var(--glow),
+                    0 0 30px rgba(245, 166, 35, 0.25);
+                border-color: var(--accent);
                 z-index: 100 !important;
             }
 
             .card:active:not(.disabled) {
-                transform: translateY(2px) scale(1.05);
-                box-shadow: 
-                    0 2px 0 var(--wood-dark),
-                    0 4px 8px rgba(0, 0, 0, 0.2);
+                box-shadow:
+                    0 1px 0 var(--wood-dark),
+                    0 2px 4px rgba(0, 0, 0, 0.3);
+                border-color: var(--accent-light);
             }
 
             .card.disabled {
@@ -470,9 +432,7 @@
         <div class="game-container">
             <h1>🐏 羊了个羊 🐏</h1>
             
-            <div class="level-select" id="levelSelect"></div>
-
-            <div class="level-info" id="levelInfo">第 1 关 - 入门模式</div>
+            <div class="level-info" id="levelInfo">第 1 关 - 入门</div>
 
             <div class="score-display">
                 <div class="score-item">剩余: <span id="remaining">0</span></div>
@@ -487,7 +447,7 @@
 
             <div class="btn-row">
                 <button class="btn shuffle" id="shuffleBtn" onclick="shuffleBoard()" style="display:none;">🔀 洗牌</button>
-                <button class="btn" onclick="initGame()">🔄 重新开始</button>
+                <button class="btn" onclick="showRestartConfirm()">🔄 重新开始</button>
             </div>
         </div>
 
@@ -503,8 +463,17 @@
         <div class="modal" id="loseModal">
             <div class="modal-content">
                 <h2>😢 槽位已满</h2>
-                <p>再接再厉，下次好运!</p>
-                <button class="btn" onclick="closeModal('loseModal'); initGame()">重新挑战</button>
+                <p id="loseMsg">再接再厉，下次好运!</p>
+                <button class="btn" onclick="closeModal('loseModal'); restartGame()">回到第一关</button>
+            </div>
+        </div>
+
+        <div class="modal" id="restartModal">
+            <div class="modal-content">
+                <h2>🔄 重新开始</h2>
+                <p>确定要重新开始吗？将回到第一关！</p>
+                <button class="btn" onclick="closeModal('restartModal'); restartGame()">确定</button>
+                <button class="btn" onclick="closeModal('restartModal')" style="margin-left:10px; background: linear-gradient(180deg, #aaa, #888); box-shadow: 0 4px 0 #666, 0 6px 15px rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.3);">取消</button>
             </div>
         </div>
 
@@ -542,25 +511,8 @@
             let isAnimating = false;
             let shuffleUsed = false;
 
-            function initLevelButtons() {
-                const container = document.getElementById('levelSelect');
-                container.innerHTML = '';
-                
-                LEVELS.forEach((level, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = `level-btn ${level.difficulty} ${index === currentLevel ? 'active' : ''}`;
-                    btn.textContent = index + 1;
-                    btn.onclick = () => selectLevel(index);
-                    container.appendChild(btn);
-                });
-            }
-
             function selectLevel(index) {
                 currentLevel = index;
-                document.querySelectorAll('.level-btn').forEach((btn, i) => {
-                    btn.classList.toggle('active', i === index);
-                });
-                document.getElementById('shuffleBtn').style.display = LEVELS[index].shuffle ? 'inline-block' : 'none';
                 initGame();
             }
 
@@ -572,10 +524,11 @@
                 document.getElementById("game-board").innerHTML = "";
                 document.getElementById("tray").innerHTML = "";
                 document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
-                
+
                 const level = LEVELS[currentLevel];
                 document.getElementById('levelInfo').textContent = `第 ${currentLevel + 1} 关 - ${level.name}`;
-                
+                document.getElementById('shuffleBtn').style.display = level.shuffle ? 'inline-block' : 'none';
+
                 generateLevel(level);
                 renderBoard();
                 checkOverlap();
@@ -840,6 +793,14 @@
                 }, 350);
             }
 
+            function showRestartConfirm() {
+                document.getElementById('restartModal').classList.add('show');
+            }
+
+            function restartGame() {
+                selectLevel(0);
+            }
+
             function checkWinLose() {
                 const maxLevel = LEVELS.length - 1;
                 let leftCards = allCards.filter((c) => !c.removed).length;
@@ -851,6 +812,11 @@
                 }
 
                 if (trayCards.length >= TRAY_LIMIT) {
+                    if (currentLevel > 0) {
+                        document.getElementById("loseMsg").textContent = `第 ${currentLevel + 1} 关失败！回到第一关重新开始吧！`;
+                    } else {
+                        document.getElementById("loseMsg").textContent = '再接再厉，下次好运!';
+                    }
                     document.getElementById("loseModal").classList.add("show");
                 }
             }
@@ -866,7 +832,6 @@
                 document.getElementById(id).classList.remove("show");
             }
 
-            initLevelButtons();
             initGame();
         </script>
     </body>
